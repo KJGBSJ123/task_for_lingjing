@@ -62,3 +62,54 @@ model_a=model_a.to(device)
 output_a=model_a(torch.randn(1,3,64,64).cuda())
 print(output_a.shape)
 ```
+- **2026/11/11**
+- ## 学习搭建ResNet
+- 新增代码如下：
+```
+class ResNet(nn.Module):
+    def __init__(self):
+        super(ResNet, self).__init__()
+        self.b1=nn.Sequential(
+            nn.Conv2d(in_channels=1,out_channels=64,kernel_size=7,padding=3),
+            nn.BatchNorm2d(64),
+            nn.ReLU(),
+            nn.MaxPool2d(kernel_size=3,stride=2)
+        )
+        self.b2=nn.Sequential(
+            Residul(64,64,use_1=1),
+            Residul(64,64,use_1=1),
+        )
+        self.b3 = nn.Sequential(
+            Residul(64, 128, use_1=1,strides=2),
+            Residul(128, 128, use_1=1),
+        )
+        self.b4 = nn.Sequential(
+            Residul(128, 256, use_1=1,strides=2),
+            Residul(256, 256, use_1=1),
+        )
+        self.b5 = nn.Sequential(
+            Residul(256, 512, use_1=1,strides=2),
+            Residul(512, 512, use_1=1),
+        )
+        self.b6 = nn.Sequential(
+            nn.AdaptiveAvgPool2d((1,1)),
+            nn.Flatten(),
+            nn.Linear(512,10),
+        )
+    def forward(self,inputs):
+        output = self.b1(inputs)
+        output = self.b2(output)
+        output = self.b3(output)
+        output = self.b4(output)
+        output = self.b5(output)
+        output = self.b6(output)
+        return output
+```
+- *b1:初始特征提取，池化*
+- （池化：取卷积核中最大值，保留最关键特征，比如）
+- 1 2 3
+- 4 5 6     -->9
+- 7 8 9
+- *b2-5:卷积层，提取，学习关键信息*
+- 这里用到了昨天的残差块
+- *b6:展平，线形层分析*
